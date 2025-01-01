@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 import logging
 import time
 from typing import (
@@ -61,8 +62,6 @@ class ExecutionPlan:
 
 
 class RetailSupportMultiStepAgent:
-    BELIEF_FACTS_KEY = 'belief_facts'
-
     def __init__(
             self, 
             tool_box: Toolbox, 
@@ -193,6 +192,7 @@ class RetailSupportMultiStepAgent:
                 )
     
     def compute_beliefs(self, step: int):
+        print(f"=========== Compute Facts @ {step} ===================")
         agent_memory = self.create_inner_memory_from_logs()
         message_system_prompt_belief_facts = {"role": MessageRole.SYSTEM, "content": SYSTEM_PROMPT_GENERATE_BELIEF.replace("<<domain_knowledge>>",self.policy_wiki)}
         message_user_prompt_belief_facts = {
@@ -209,6 +209,7 @@ class RetailSupportMultiStepAgent:
                     stop_sequences=["<belief_state_with_facts>"]
                 )
                 parsed_belief_and_facts = parse_json_blob(llm_output)
+                print(json.dumps(parsed_belief_and_facts, indent=2))
                 beliefFacts = BeliefFacts(
                     step=step,
                     llmOutput=llm_output,
@@ -226,7 +227,7 @@ class RetailSupportMultiStepAgent:
         self.belief_facts.append(beliefFacts)
     
     def compute_plan(self, step: int):
-        #print(f"=========== Compute Plan @ {step} ===================")
+        print(f"=========== Compute Plan @ {step} ===================")
         agent_memory = self.create_inner_memory_from_logs()
 
         # Get Latest Computed Facts (or Information Gathered)
@@ -256,7 +257,7 @@ class RetailSupportMultiStepAgent:
             [plan_update_message] + agent_memory + [plan_update_message_user], 
             stop_sequences=["<end_plan>"]
         )
-        #print(llm_output)
+        print(llm_output)
         computed_plan = ExecutionPlan(
             step=step,
             beliefFactsUsed=beliefFacts,
@@ -289,7 +290,7 @@ class RetailSupportMultiStepAgent:
         agent_memory = self.create_inner_memory_from_logs()
         try:
             llm_output = self.llm_engine([message_system_prompt_step_execution] + agent_memory, stop_sequences=["<end_action>", "Observation:"])
-            #print(llm_output)
+            print(llm_output)
         except Exception as e:
             raise AgentGenerationError(f"Error in generating llm output: {e}.")
         
@@ -319,7 +320,7 @@ class RetailSupportMultiStepAgent:
                 arguments = {}
             observation = self.execute_tool_call(tool_name, arguments)
             updated_information = str(observation).strip()
-            #print(f"Observation: {updated_information}")
+            print(f"Observation: {updated_information}")
             self.logger.info(updated_information)
             running_log_entry["observation"] = updated_information
             return running_log_entry

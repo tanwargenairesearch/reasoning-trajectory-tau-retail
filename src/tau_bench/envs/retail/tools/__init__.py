@@ -14,7 +14,6 @@ from .modify_pending_order_items import ModifyPendingOrderItems
 from .modify_pending_order_payment import ModifyPendingOrderPayment
 from .modify_user_address import ModifyUserAddress
 from .return_delivered_order_items import ReturnDeliveredOrderItems
-from .think import Think
 from .transfer_to_human_agents import TransferToHumanAgents
 
 
@@ -33,6 +32,5 @@ ALL_TOOLS = [
     ModifyPendingOrderPayment,
     ModifyUserAddress,
     ReturnDeliveredOrderItems,
-    Think,
     TransferToHumanAgents,
 ]

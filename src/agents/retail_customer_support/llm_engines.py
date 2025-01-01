@@ -75,7 +75,7 @@ class GeminiEngine:
                 sleep_time *= (2 + random.uniform(0, 1))
 
 class OpenAIEngine:
-    openai_role_conversions = {
+    role_conversions = {
         MessageRole.TOOL_RESPONSE: MessageRole.USER,
     }
 
@@ -85,7 +85,7 @@ class OpenAIEngine:
             api_key=os.getenv("OPENAI_API_KEY"),
         )
 
-    def get_clean_message_list(message_list: List[Dict[str, str]], role_conversions: Dict[str, str] = {}):
+    def get_clean_message_list(self, message_list: List[Dict[str, str]]):
         """
         Subsequent messages with the same role will be concatenated to a single message.
 
@@ -102,8 +102,8 @@ class OpenAIEngine:
             if role not in MessageRole.roles():
                 raise ValueError(f"Incorrect role {role}, only {MessageRole.roles()} are supported for now.")
 
-            if role in role_conversions:
-                message["role"] = role_conversions[role]
+            if role in self.role_conversions:
+                message["role"] = self.role_conversions[role]
 
             if len(final_message_list) > 0 and message["role"] == final_message_list[-1]["role"]:
                 final_message_list[-1]["content"] += "\n=======\n" + message["content"]
@@ -112,7 +112,7 @@ class OpenAIEngine:
         return final_message_list
 
     def __call__(self, messages, stop_sequences=[], grammar=None):
-        messages = self.get_clean_message_list(messages, role_conversions=self.openai_role_conversions)
+        messages = self.get_clean_message_list(messages)
 
         response = self.client.chat.completions.create(
             model=self.model_name,

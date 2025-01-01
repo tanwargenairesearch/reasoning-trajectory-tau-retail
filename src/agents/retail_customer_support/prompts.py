@@ -582,7 +582,7 @@ You have access to these tools and only these:
 
 Now for the given task, develop a step-by-step high-level plan taking into account the above inputs and list of facts.
 This plan should involve individual tasks based on the available tools, that if executed correctly will yield the correct answer.
-Do not skip steps, do not add any superfluous steps. Only write the high-level plan, DO NOT DETAIL INDIVIDUAL TOOL CALLS.
+Do not skip steps, do not add any superfluous steps. DO NOT USE ANY TOOL which is NOT mentioned above.
 After writing the final step of the plan, write the '\n<end_plan>' tag and stop there.
 
 Now write your new plan below."""

@@ -79,7 +79,7 @@ class OpenAIEngine:
         MessageRole.TOOL_RESPONSE: MessageRole.USER,
     }
 
-    def __init__(self, model_name="gpt-4o-mini"):
+    def __init__(self, model_name="gpt-4o"):
         self.model_name = model_name
         self.client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),

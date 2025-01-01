@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import json
 from typing import Any, Dict, Type
 from agents.retail_customer_support.llm_engines import GeminiEngine, OpenAIEngine
@@ -20,7 +21,17 @@ from agents.retail_customer_support.agents import (
     RetailSupportMultiStepAgent
 )
 
-def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulationEnv) -> Dict[str, Any] : 
+@dataclass
+class TaskExecutionResult:
+    task: Task
+    computedHash: str
+    groundTruthHash: str
+    agentLogs: list[Any]
+    rewardActionInfo: RewardActionInfo
+    rewardOutputInfo: RewardOutputInfo
+    rewardResult: RewardResult
+
+def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulationEnv) -> TaskExecutionResult : 
     dataset = load_data()
     converted_tools = [convert_tool(tool, dataset) for tool in ALL_TOOLS]
     converted_tools.append(RespondToCustomer(user))
@@ -73,21 +84,12 @@ def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulation
                 reward = 0.0
         reward_output_info = RewardOutputInfo(r_outputs=r_outputs, outputs=outputs)
     reward_result = RewardResult(reward=reward, info= reward_output_info if reward_output_info else reward_action_info, actions=[])
-    output_data = {
-        'task_instruction': task.instruction,
-        'customer_query': agent.task,
-        'trajectory': trajectory,
-        'computed_reward': reward,
-        'actions_reward': reward_action_info.r_actions,
-    }
-    with open(f"data_{data_hash}.json", 'w', encoding='utf-8') as f:
-        json.dump(output_data, f, ensure_ascii=False)
-    return {
-        'task' : task,
-        'agent_data_hash': data_hash,
-        'gt_data_hash': gt_data_hash,
-        'agent_logs' : agent.logs,
-        'reward_action': reward_action_info,
-        'reward_output': reward_output_info,
-        'final_reward': reward_result
-    }
+    return TaskExecutionResult(
+        task=task,
+        computedHash=data_hash,
+        groundTruthHash=gt_data_hash,
+        agentLogs=agent.logs,
+        rewardActionInfo=reward_action_info,
+        rewardOutputInfo=reward_output_info,
+        rewardResult=reward_result
+    )

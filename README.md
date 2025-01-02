@@ -25,8 +25,6 @@ MISTRAL_API_KEY=...
 
 ## Run
 
-Run a tool-calling agent on the τ-retail environment:
-
 ```bash
 python src/run.py --model gemini-2.0-flash-exp --model-provider google --user-model gpt-4o --user-model-provider openai --user-strategy llm
 ```

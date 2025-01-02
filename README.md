@@ -29,6 +29,14 @@ MISTRAL_API_KEY=...
 python src/run.py --model gemini-2.0-flash-exp --model-provider google --user-model gpt-4o --user-model-provider openai --user-strategy llm
 ```
 
+# High Level View
+
+![Screenshot 2025-01-02 at 10 26 41 AM](https://github.com/user-attachments/assets/e815d5fb-96dd-42c3-95f9-99df1d2f2da9)
+
+## Agent Architecture 
+![Screenshot 2025-01-02 at 10 26 49 AM](https://github.com/user-attachments/assets/bccb4c90-aa73-4c39-8f11-c4e29fff5591)
+
+
 # Rationale
 
 Tired of chatbots that can't handle complex requests? Let's build an AI that can strategize and solve problems just like a human support agent – but faster and at scale.

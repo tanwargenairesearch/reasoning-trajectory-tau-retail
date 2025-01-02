@@ -18,6 +18,7 @@ from smolagents.tools import (
     get_tool_description_with_args
 )
 from smolagents.utils import (
+    console,
     parse_json_tool_call,
     parse_json_blob
 )
@@ -31,6 +32,12 @@ from smolagents.agents import (
     AgentMaxIterationsError
 )
 
+from rich.syntax import Syntax
+from rich.console import Group
+from rich.panel import Panel
+from rich.rule import Rule
+from rich.text import Text
+
 from .prompts import (
     RETAIL_SUPPORT_AGENT_SYSTEM_PROMPT, 
     SYSTEM_PROMPT_GENERATE_BELIEF,
@@ -42,9 +49,11 @@ from .prompts import (
 
 logger = transformers_logging.get_logger(__name__)
 logger.propagate = False
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 ch = logging.StreamHandler()
 logger.addHandler(ch)
+
+YELLOW_HEX = "#d4b702"
 
 @dataclass
 class BeliefFacts:
@@ -64,7 +73,8 @@ class ExecutionPlan:
 
 class RetailSupportMultiStepAgent:
     def __init__(
-            self, 
+            self,
+            model: str, 
             tool_box: Toolbox, 
             llm_engine: Callable,
             policy_wiki : str,
@@ -72,7 +82,8 @@ class RetailSupportMultiStepAgent:
             max_iterations:  int = 10,
             belief_computation_interval: Optional[int] = None,
             planning_interval: Optional[int] = None,
-    ):
+    ):  
+        self.model = model
         self.toolbox = tool_box
         self.tool_parser = parse_json_tool_call
         self.llm_engine = llm_engine
@@ -93,10 +104,7 @@ class RetailSupportMultiStepAgent:
         self.system_prompt = format_prompt_with_tools(
             self.toolbox, self.system_prompt_template, DEFAULT_TOOL_DESCRIPTION_TEMPLATE
         )
-         
-        self.logger.log(33, "======== New task ========")
-        self.logger.log(34, self.task)
-        
+
     def create_inner_memory_from_logs(self) -> List[Dict[str, str]]:
         task_message = {
             "role": MessageRole.USER,
@@ -222,6 +230,12 @@ class RetailSupportMultiStepAgent:
                     raise AgentExecutionError(f"facts computation failed {e}")
                 trials+=1
                 # TODO Add logging for Failures
+        
+        
+        console.print(
+                Rule("[bold]Current Belief & Facts (Information Known/Unknown)", style="orange"), 
+                Text(json.dumps(parsed_belief_and_facts, indent=2))
+            )
 
         self.belief_facts.append(beliefFacts)
     
@@ -257,6 +271,10 @@ class RetailSupportMultiStepAgent:
             stop_sequences=["<end_plan>"]
         )
         #print(llm_output)
+        console.print(
+                Rule("[bold]Generated Plan based on Facts learned so far", style="orange"), 
+                Text(llm_output)
+            )
         computed_plan = ExecutionPlan(
             step=step,
             beliefFactsUsed=beliefFacts,
@@ -295,6 +313,9 @@ class RetailSupportMultiStepAgent:
         
         running_log_entry['llm_output'] = llm_output
         rationale, action = self.extract_action(llm_output=llm_output, split_token="Action:")
+        console.print(
+                f"[Thought]: {rationale}"
+            )
 
         try:
             tool_name, arguments = self.tool_parser(action)
@@ -303,6 +324,10 @@ class RetailSupportMultiStepAgent:
 
         running_log_entry["rationale"] = rationale
         running_log_entry["tool_call"] = {"tool_name": tool_name, "tool_arguments": arguments}
+
+        console.print(
+                f"[Action]: Calling tool :: '{tool_name}' with arguments :: {arguments}"
+            )
 
         if tool_name == "final_answer":
             if isinstance(arguments, dict):
@@ -313,6 +338,9 @@ class RetailSupportMultiStepAgent:
             else:
                 answer = arguments
             running_log_entry["final_answer"] = answer
+            console.print(
+                    Text(f"[Final answer]: {answer}", style=f"bold {YELLOW_HEX}")
+                )
             return answer
         else:
             if arguments is None:
@@ -320,8 +348,12 @@ class RetailSupportMultiStepAgent:
             observation = self.execute_tool_call(tool_name, arguments)
             updated_information = str(observation).strip()
             #print(f"Observation: {updated_information}")
-            self.logger.info(updated_information)
+            #self.logger.info(updated_information)
             running_log_entry["observation"] = updated_information
+            prefix_obs = "[Customer] " if tool_name == 'respond_customer' else ""
+            console.print(
+               f"[Observation]: {prefix_obs}{updated_information}"
+            )
             return running_log_entry
         
     def provide_final_answer(self, task) -> str:
@@ -350,6 +382,10 @@ class RetailSupportMultiStepAgent:
         self.task = task
         self.initialize_for_run()
 
+        console.print(
+            Panel(Text(f"[Customer] {task}"))
+        )
+
         iteration = 0
         final_answer = None
         
@@ -370,6 +406,10 @@ class RetailSupportMultiStepAgent:
                 else:
                     if iteration % self.planning_interval == 0:
                         self.compute_plan(iteration)
+
+                console.print(
+                    Rule(f"[bold]Step {iteration}", characters="━", style=YELLOW_HEX)
+                )
 
                 # Execute Step
                 self.execute_step(step_index=iteration, running_log_entry=step_log_entry)

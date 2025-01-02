@@ -97,15 +97,21 @@ if __name__ == '__main__':
     else:
         tasks = TASKS_TEST[args.start_index:args.end_index]
     rewards = []
+    
     for task in tasks:
-        task_reward = generate_trajectory_and_evaluate_reward(task, user, agent_engine)
+        task_reward = generate_trajectory_and_evaluate_reward(
+            model=args.model, 
+            task=task, 
+            user=user, 
+            llm_engine=agent_engine
+        )
         rewards.append(task_reward)
-        print(f"Task Instruction:\n{task.instruction}\n")
-        print(f"Task rewards: {task_reward.rewardActionInfo.r_actions}")
+        # print(f"Task Instruction:\n{task.instruction}\n")
+        # print(f"Task rewards: {task_reward.rewardActionInfo.r_actions}")
         file_str = f"{args.log_dir}/{task_reward.computedHash}_{time_str}.json"
         save_trajectory(task_reward, file_str)
     
-    print(">>>>>>>>>> REWARD SUMMARY >>>>>>>>>>>>>")
+    print("\n\n>>>>>>>>>> REWARD SUMMARY >>>>>>>>>>>>>")
     r_actions = 0.0
     r_total = 0.0
     for r in rewards:

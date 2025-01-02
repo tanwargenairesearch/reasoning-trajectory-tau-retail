@@ -21,6 +21,16 @@ from agents.retail_customer_support.agents import (
     RetailSupportMultiStepAgent
 )
 
+from rich.syntax import Syntax
+from rich.console import Group
+from rich.panel import Panel
+from rich.rule import Rule
+from rich.text import Text
+
+from smolagents.utils import (
+    console
+)
+
 @dataclass
 class TaskExecutionResult:
     task: Task
@@ -32,11 +42,12 @@ class TaskExecutionResult:
     rewardOutputInfo: RewardOutputInfo
     rewardResult: RewardResult
 
-def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulationEnv, llm_engine: Callable) -> TaskExecutionResult : 
+def generate_trajectory_and_evaluate_reward(model:str, task: Task, user: BaseUserSimulationEnv, llm_engine: Callable) -> TaskExecutionResult : 
     dataset = load_data()
     converted_tools = [convert_tool(tool, dataset) for tool in ALL_TOOLS]
     converted_tools.append(RespondToCustomer(user))
     agent = RetailSupportMultiStepAgent(
+        model=model,
         tool_box=Toolbox(
             tools=converted_tools
         ),
@@ -47,6 +58,15 @@ def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulation
         planning_interval=4, 
         belief_computation_interval=2
     )
+    console.print(
+            Panel(
+                f"\n[bold]{task.instruction.strip()}\n",
+                title="[bold]New Task Instruction",
+                subtitle=f"{model}",
+                border_style="#d4b702",
+                subtitle_align="left",
+            )
+        )
     response = user.reset(instruction=task.instruction)
     agent.run(response)
 

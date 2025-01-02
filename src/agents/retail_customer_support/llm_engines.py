@@ -49,7 +49,7 @@ class GeminiEngine:
         system_instruction = system_messages[0]['content']
         generation_config = genai.types.GenerationConfig(
             max_output_tokens=4096,
-            temperature=0.3, 
+            temperature=0.5, 
             top_p=0.9,
             stop_sequences=stop_sequences
         )

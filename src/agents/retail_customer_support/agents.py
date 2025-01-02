@@ -42,6 +42,7 @@ from .prompts import (
 
 logger = transformers_logging.get_logger(__name__)
 logger.propagate = False
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 logger.addHandler(ch)
 
@@ -95,9 +96,7 @@ class RetailSupportMultiStepAgent:
          
         self.logger.log(33, "======== New task ========")
         self.logger.log(34, self.task)
-        self.logger.debug("System prompt is as follows:")
-        self.logger.debug(self.system_prompt)
-
+        
     def create_inner_memory_from_logs(self) -> List[Dict[str, str]]:
         task_message = {
             "role": MessageRole.USER,

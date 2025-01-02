@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import json
-from typing import Any, Dict, Type
+from typing import Any, Callable, Dict, List, Type
 from agents.retail_customer_support.llm_engines import GeminiEngine, OpenAIEngine
 from tau_bench.envs.base import consistent_hash, to_hashable
 from tau_bench.envs.retail.data import load_data
@@ -26,12 +26,13 @@ class TaskExecutionResult:
     task: Task
     computedHash: str
     groundTruthHash: str
-    agentLogs: list[Any]
+    trajectory: List[Any]
+    agentLogs: List[Any]
     rewardActionInfo: RewardActionInfo
     rewardOutputInfo: RewardOutputInfo
     rewardResult: RewardResult
 
-def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulationEnv) -> TaskExecutionResult : 
+def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulationEnv, llm_engine: Callable) -> TaskExecutionResult : 
     dataset = load_data()
     converted_tools = [convert_tool(tool, dataset) for tool in ALL_TOOLS]
     converted_tools.append(RespondToCustomer(user))
@@ -39,8 +40,8 @@ def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulation
         tool_box=Toolbox(
             tools=converted_tools
         ),
-        #llm_engine=GeminiEngine(), 
-        llm_engine=OpenAIEngine(model_name="gpt-4o"),
+        llm_engine=llm_engine, 
+        #llm_engine=OpenAIEngine(model_name="gpt-4o"),
         policy_wiki=WIKI, 
         max_iterations=50, 
         planning_interval=4, 
@@ -88,6 +89,7 @@ def generate_trajectory_and_evaluate_reward(task: Task, user: BaseUserSimulation
         task=task,
         computedHash=data_hash,
         groundTruthHash=gt_data_hash,
+        trajectory=trajectory,
         agentLogs=agent.logs,
         rewardActionInfo=reward_action_info,
         rewardOutputInfo=reward_output_info,

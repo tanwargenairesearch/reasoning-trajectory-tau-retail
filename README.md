@@ -14,7 +14,7 @@ git clone https://github.com/tanwargenairesearch/reasoning-trajectory-tau-retail
 pip install -e .
 ```
 
-3. Set up your OpenAI / Anthropic / Google / Mistral / AnyScale API keys as environment variables.
+3. Set up your OpenAI / Anthropic / Google API keys as environment variables.
 
 ```bash
 OPENAI_API_KEY=...
@@ -28,6 +28,9 @@ MISTRAL_API_KEY=...
 ```bash
 python src/run.py --model gemini-2.0-flash-exp --model-provider google --user-model gpt-4o --user-model-provider openai --user-strategy llm
 ```
+
+![example_trajectory_1](https://github.com/user-attachments/assets/1204cacd-ec0d-477c-9521-27dd965d461f)
+
 
 # High Level View
 
